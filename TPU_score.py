@@ -17,16 +17,13 @@ outputs = model.generate(
     output_scores=True,
 )
 
-# compute transition (per-generated-token) log-probs (normalized)
 transition_scores = model.compute_transition_scores(
     outputs.sequences, outputs.scores, normalize_logits=True
 )
-# get only the newly generated tokens (exclude prompt tokens)
+
 input_len = inputs["input_ids"].shape[1]
 generated_token_ids = outputs.sequences[:, input_len:]
-generated_token_logprobs = transition_scores[0].cpu().numpy()  # array of log-probs (natural log) for each generated token
-
-# TPU
-avg_log = float(generated_token_logprobs.mean())
-u_tpu = 1.0 - math.exp(avg_log)
-print("TPU =", u_tpu)
+generated_token_logprobs = transition_scores[0]  
+avg_log = generated_token_logprobs.mean()
+u_tpu = 1.0 - torch.exp(avg_log)
+print("TPU =", u_tpu.item())
